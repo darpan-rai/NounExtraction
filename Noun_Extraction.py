@@ -1,33 +1,53 @@
-# from textblob import TextBlob
+from textblob import TextBlob
 from textblob import Word
 import sys
 import csv
 from importlib import reload
-import nltk
+from nltk.stem import WordNetLemmatizer
 import docx2txt
-
+import nltk
+import re
 reload(sys)
 sys.stdout.encoding
 
 
-# text = TextBlob(lines)        '''tried using textblob, however this does
-# textDoc = text.lower()           not return correct nouns'''
-# nouns = textDoc.noun_phrases
 def noun_extraction():
-    is_noun = lambda pos: pos[:2] == 'NN'
 
-    tokenized = nltk.word_tokenize(lines.lower())  # lower case across diagram
-    nouns = [word for (word, pos) in nltk.pos_tag(tokenized) if is_noun(pos)]
+    text = TextBlob(lines)       # tried using textblob, however this does
+    nouns = text.noun_phrases                 #not return correct nouns
 
-    # singularise nouns, pluralizing might add 's' to any plural words.
+    # is_noun = lambda pos: pos[:2] == 'NN'
+    #
+    # tokenized = nltk.word_tokenize(lines.lower())  # lower case across diagram
+    # nouns = [word for (word, pos) in nltk.pos_tag(tokenized) if is_noun(pos)]
+
+    text2 = ' '.join(nouns)
 
     list = []
-    for words in nouns:
-        w = Word(words)
-        sing = w.singularize()
-        list.append(sing)
+    for item in nouns:
+        w = WordNetLemmatizer().lemmatize(item)
+        list.append(w)
 
-    print(list)
+    # creating dictionary to calculate frequency
+
+    frequency = {}
+    sequence = re.findall(r'\b[a-z]{2,30}\b', text2)
+
+    for word in sequence:
+        count = frequency.get(word, 0)
+        frequency[word] = count + 1
+
+    frequency_list = frequency.keys()
+
+    for words in frequency_list:
+        print(words, frequency[words])
+
+        noun_count = open('count.csv', 'w', newline='')
+        fieldnames = ["Word", "Count"]
+        csv.DictWriter(noun_count, fieldnames).writeheader()
+        w = csv.writer(noun_count, 'unix', delimiter=' ')
+
+        w.writerows(frequency.items())
 
     # remove duplicate nouns from document
     unique_nouns = []
@@ -35,12 +55,10 @@ def noun_extraction():
         if n not in unique_nouns:
             unique_nouns.append(n)
 
-    print(unique_nouns)
-
     # counts to display number of duplicate and plural nouns
     print('initial count:', len(list), 'final count:', len(unique_nouns))
 
-    noun_log = open('Nouns2.csv', 'w')
+    noun_log = open('Nouns.csv', 'w')
     fieldnames = ["Nouns", "Description"]
     csv.DictWriter(noun_log, fieldnames).writeheader()
     writer = csv.writer(noun_log, 'unix', delimiter=' ')
