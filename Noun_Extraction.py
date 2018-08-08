@@ -7,6 +7,7 @@ from nltk.stem import WordNetLemmatizer
 import docx2txt
 import nltk
 import re
+import regex
 reload(sys)
 sys.stdout.encoding
 
@@ -21,14 +22,15 @@ def noun_extraction():
     # tokenized = nltk.word_tokenize(lines.lower())  # lower case across diagram
     # nouns = [word for (word, pos) in nltk.pos_tag(tokenized) if is_noun(pos)]
 
-    text2 = ' '.join(nouns)
+
 
     list = []
     for item in nouns:
         w = WordNetLemmatizer().lemmatize(item)
         list.append(w)
 
-    # creating dictionary to calculate frequency
+    text2 = ' '.join(list)
+    # creating dictionary to calculate frequency using findall
 
     frequency = {}
     sequence = re.findall(r'\b[a-z]{2,30}\b', text2)
@@ -49,13 +51,13 @@ def noun_extraction():
 
         w.writerows(frequency.items())
 
-    # remove duplicate nouns from document
+    # remove duplicate nouns from list
     unique_nouns = []
     for n in list:
         if n not in unique_nouns:
-            unique_nouns.append(n)
+          unique_nouns.append(n)
 
-    # counts to display number of duplicate and plural nouns
+    # counts to display number of duplicate nouns
     print('initial count:', len(list), 'final count:', len(unique_nouns))
 
     noun_log = open('Nouns.csv', 'w')
@@ -64,7 +66,9 @@ def noun_extraction():
     writer = csv.writer(noun_log, 'unix', delimiter=' ')
 
     for index in unique_nouns:
-        writer.writerow([index])
+        match = regex.search(r'\d', index)
+        if not match:
+            writer.writerow([index])
 
 
 Filename = input('Enter File Path:\n')
@@ -82,4 +86,3 @@ else:
     lines = File.read()
 
     noun_extraction()
-
